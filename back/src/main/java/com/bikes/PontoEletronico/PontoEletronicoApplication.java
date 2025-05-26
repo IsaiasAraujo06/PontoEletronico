@@ -7,7 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class PontoEletronicoApplication {
 
 	public static void main(String[] args) {
+
 		SpringApplication.run(PontoEletronicoApplication.class, args);
+
 	}
 
 }
