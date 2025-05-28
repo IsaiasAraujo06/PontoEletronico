@@ -1,11 +1,10 @@
-package com.bikes.PontoEletronico.repository;
+package com.pontoeletronico.repository;
 
-import com.bikes.PontoEletronico.model.RegistroPonto;
-import com.bikes.PontoEletronico.modelo.User;
+import com.pontoeletronico.model.RegistroPonto;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface RegistroPontoRepository extends JpaRepository<RegistroPonto, Long> {
-    List<RegistroPonto> findByUserAndDataHoraBetween(User user, LocalDateTime  inicio, LocalDateTime fim);
+    List<RegistroPonto> findByUsernameAndDataHoraBetween(String username, LocalDateTime inicio, LocalDateTime fim);
 }

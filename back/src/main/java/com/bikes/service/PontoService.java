@@ -1,10 +1,11 @@
-package com.bikes.PontoEletronico.service;
+package com.pontoeletronico.service;
 
-import com.bikes.PontoEletronico.model.RegistroPonto;
-import com.bikes.PontoEletronico.model.User;
-import com.bikes.PontoEletronico.repository.RegistroPontoRepository;
+import com.pontoeletronico.model.RegistroPonto;
+import com.pontoeletronico.model.TipoRegistro;
+import com.pontoeletronico.repository.RegistroPontoRepository;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class PontoService {
@@ -14,15 +15,17 @@ public class PontoService {
         this.registroPontoRepository = registroPontoRepository;
     }
 
-    public RegistroPonto registrarPonto(User user, TipoRegistro tipo) {
+    public RegistroPonto registrarPonto(String username, TipoRegistro tipo) {
         RegistroPonto registro = new RegistroPonto();
-        registro.setUser(user);
+        registro.setUsername(username); // Temporário - sem relação com User ainda
         registro.setDataHora(LocalDateTime.now());
         registro.setTipo(tipo);
         return registroPontoRepository.save(registro);
-
     }
 
-    public List<RegistroPonto> buscarRegistrosPorPeriodo(User user, LocalDateTime inicio, LocalDateTime fim)
-}
+    public List<RegistroPonto> buscarRegistrosPorPeriodo(String username,
+                                                         LocalDateTime inicio,
+                                                         LocalDateTime fim) {
+        return registroPontoRepository.findByUsernameAndDataHoraBetween(username, inicio, fim);
+    }
 }

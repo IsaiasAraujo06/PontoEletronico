@@ -1,4 +1,4 @@
-package com.bikes.PontoEletronico.model;
+package com.pontoeletronico.model;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -9,14 +9,10 @@ public class RegistroPonto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    private User user;
+    private String username; // Temporário - será substituído por relação com User depois
 
-    private LocalDateTime DataHora;
-    private TipoRegistro tipo;
+    private LocalDateTime dataHora;
+    private TipoRegistro tipo; // ENTRADA, SAIDA, etc.
 
-}
-
-public enum TipoRegistro {
-    ENTRADA, SAIDA, INICIO_INTERVALO, FIM_INTERVALO
+    // Getters e Setters
 }
