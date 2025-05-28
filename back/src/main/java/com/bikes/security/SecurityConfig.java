@@ -1,53 +1,90 @@
 package com.bikes.PontoEletronico.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.BeanIds;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@Configuration // indica que a classe usa configurações do Spring
-@EnableWebSecurity // Ativa a segurança web do Spring Security
-public class SecurityConfig { // *Classe
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(
+        securedEnabled = true,
+        jsr250Enabled = true,
+        prePostEnabled = true
+)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Bean // Cria um objeto gerenciado pelo Spring. Isso são os Bean's
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception { // *Método
-        http
-                .csrf().disable() // desabilita a proteção CSRF
-                .authorizeRequests() // Início da configuração de regras de acesso
-                .antMatchers("/api/auth/**").permitAll() // Define URL's específicas e suas permissões
-                .anyRequest().authenticated() // Faz com que todas as outras URL's exijam autenticação
-                .and()
-                .httpBasic(); //Ativa a autenticação básica: Usuário/senha
+    @Autowired
+    CustomUserDetailsService customUserDetailsService;
 
-        return http.build();
-    }
+    @Autowired
+    private JwtAuthEntryPoint unauthorizedHandler;
 
     @Bean
-    public UserDetailsService userDetailsService() { //*Método
-        UserDetails user = User.builder() //Define o método de gerenciamento de funcionários
-                .username("funcionario")
-                .password(passwordEncoder().encode("123456"))
-                .roles("FUNCIONARIO")
-                .build();
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter();
+    }
 
-        UserDetails admin = User.builder() //Define o método de gerenciamento de administradores
-                .username("admin")
-                .password(passwordEncoder().encode("123456"))
-                .roles("ADMIN")
-                .build();
+    @Override
+    public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
+        authenticationManagerBuilder
+                .userDetailsService(customUserDetailsService)
+                .passwordEncoder(passwordEncoder());
+    }
 
-        return new InMemoryUserDetailsManager(user, admin); //Armazena usuários na memória ao invés do banco (Vai necessitar a troca)
+    @Bean(BeanIds.AUTHENTICATION_MANAGER)
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    } //*Método que codifica as senhas para armazenamento seguro
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .cors()
+                .and()
+            .csrf()
+                .disable()
+            .exceptionHandling()
+                .authenticationEntryPoint(unauthorizedHandler)
+                .and()
+            .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+            .authorizeRequests()
+                .antMatchers("/",
+                    "/favicon.ico",
+                    "/**/*.png",
+                    "/**/*.gif",
+                    "/**/*.svg",
+                    "/**/*.jpg",
+                    "/**/*.html",
+                    "/**/*.css",
+                    "/**/*.js")
+                    .permitAll()
+                .antMatchers("/api/auth/**")
+                    .permitAll()
+                .antMatchers("/api/user/checkUsernameAvailability", "/api/user/checkEmailAvailability")
+                    .permitAll()
+                .anyRequest()
+                    .authenticated();
+
+        // Add our custom JWT security filter
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+    }
 }
